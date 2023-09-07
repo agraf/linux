@@ -402,6 +402,8 @@ void efi_native_runtime_setup(void);
 #define EFI_CERT_X509_SHA256_GUID		EFI_GUID(0x3bd2a492, 0x96c0, 0x4079, 0xb4, 0x20, 0xfc, 0xf9, 0x8e, 0xf1, 0x03, 0xed)
 #define EFI_CC_BLOB_GUID			EFI_GUID(0x067b1f5f, 0xcf26, 0x44c5, 0x85, 0x54, 0x93, 0xd7, 0x77, 0x91, 0x2d, 0x42)
 
+#define EFI_BOOTLOG_GUID			EFI_GUID(0xd6128add, 0x85fa, 0x4428, 0x96, 0x5b, 0x26, 0xfd, 0xab, 0xad, 0xfb, 0x26)
+
 /*
  * This GUID is used to pass to the kernel proper the struct screen_info
  * structure that was populated by the stub based on the GOP protocol instance
@@ -650,6 +652,7 @@ extern struct efi {
 	unsigned long			mokvar_table;		/* MOK variable config table */
 	unsigned long			coco_secret;		/* Confidential computing secret table */
 	unsigned long			unaccepted;		/* Unaccepted memory table */
+	unsigned long			bootlog;		/* Boot log config table */
 
 	efi_get_time_t			*get_time;
 	efi_set_time_t			*set_time;
@@ -737,6 +740,11 @@ extern void __init efi_memmap_unmap(void);
 extern void __init efi_esrt_init(void);
 #else
 static inline void efi_esrt_init(void) { }
+#endif
+#ifdef CONFIG_EFI_BOOTLOG
+extern void __init efi_bootlog_init(void);
+#else
+static inline void efi_bootlog_init(void) { }
 #endif
 extern int efi_config_parse_tables(const efi_config_table_t *config_tables,
 				   int count,

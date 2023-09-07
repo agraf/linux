@@ -287,6 +287,13 @@ config EFI_EMBEDDED_FIRMWARE
 	bool
 	select CRYPTO_LIB_SHA256
 
+config EFI_BOOTLOG
+	bool
+	depends on EFI
+	default y
+	help
+	  Enable exposure of pre-Linux boot logs via sysfs in /sys/firmware/bootlog
+
 endmenu
 
 config UEFI_CPER

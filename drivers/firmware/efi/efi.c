@@ -53,6 +53,9 @@ struct efi __read_mostly efi = {
 #ifdef CONFIG_UNACCEPTED_MEMORY
 	.unaccepted		= EFI_INVALID_TABLE_ADDR,
 #endif
+#ifdef CONFIG_EFI_BOOTLOG
+	.bootlog		= EFI_INVALID_TABLE_ADDR,
+#endif
 };
 EXPORT_SYMBOL(efi);
 
@@ -593,6 +596,9 @@ static const efi_config_table_type_t common_tables[] __initconst = {
 #endif
 #ifdef CONFIG_EFI_GENERIC_STUB
 	{LINUX_EFI_SCREEN_INFO_TABLE_GUID,	&screen_info_table			},
+#endif
+#ifdef CONFIG_EFI_BOOTLOG
+	{EFI_BOOTLOG_GUID,			&efi.bootlog,		"Bootlog"	},
 #endif
 	{},
 };
