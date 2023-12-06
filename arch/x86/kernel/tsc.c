@@ -147,6 +147,9 @@ static void __set_cyc2ns_scale(unsigned long khz, int cpu, unsigned long long ts
 	struct cyc2ns_data data;
 	struct cyc2ns *c2n;
 
+	// XXX
+	tsc_now = 0;
+
 	ns_now = cycles_2_ns(tsc_now);
 
 	/*
