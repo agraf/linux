@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/kho/ftrace/ftrace.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Ftrace core data
+
+maintainers:
+  - Alexander Graf <graf@amazon.com>
+
+properties:
+  compatible:
+    enum:
+      - ftrace-v1
+
+  events:
+    $ref: /schemas/types.yaml#/definitions/uint32-array
+    description:
+      Array of { u32 crc, u32 type } elements. Each element contains a unique
+      identifier for an event, followed by the identifier that this event had
+      in the previous kernel's trace buffers.
+
+# Other child nodes will be of type "ftrace,array-v1". Each of which describe
+# a trace buffer
+additionalProperties: true
+
+required:
+  - compatible
+  - events
+
+examples:
+  - |
+    ftrace {
+        compatible = "ftrace-v1";
+        events = <1 1 2 2 3 3>;
+
+        global_trace {
+          compatible = "ftrace,array-v1";
+          trace_flags = < 0x3354601 >;
+
+          cpu0 {
+            compatible = "ftrace,cpu-v1";
+            cpu = < 0x00 >;
+            mem = < 0x101000000ULL 0x38ULL 0x101000100ULL 0x1000ULL 0x101000038ULL 0x38ULL 0x101002000ULL 0x1000ULL>;
+          };
+        };
+      };

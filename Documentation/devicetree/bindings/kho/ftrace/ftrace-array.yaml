@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/kho/ftrace/ftrace-array.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Ftrace trace array
+
+maintainers:
+  - Alexander Graf <graf@amazon.com>
+
+properties:
+  compatible:
+    enum:
+      - ftrace,array-v1
+
+  trace_flags:
+    $ref: /schemas/types.yaml#/definitions/uint32
+    description:
+      Bitmap of all the trace flags that were enabled in the trace array at the
+      point of serialization.
+
+# Subnodes will be of type "ftrace,cpu-v1", one each per CPU
+additionalProperties: true
+
+required:
+  - compatible
+  - trace_flags
+
+examples:
+  - |
+    ftrace {
+        compatible = "ftrace-v1";
+        events = <1 1 2 2 3 3>;
+
+        global_trace {
+          compatible = "ftrace,array-v1";
+          trace_flags = < 0x3354601 >;
+
+          cpu0 {
+            compatible = "ftrace,cpu-v1";
+            cpu = < 0x00 >;
+            mem = < 0x101000000ULL 0x38ULL 0x101000100ULL 0x1000ULL 0x101000038ULL 0x38ULL 0x101002000ULL 0x1000ULL>;
+          };
+        };
+      };
