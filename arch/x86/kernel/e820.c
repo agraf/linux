@@ -1332,10 +1332,16 @@ void __init e820__memblock_setup(void)
 		memblock_add(entry->addr, entry->size);
 
 		/*
-		 * At this point with KHO we only allocate from scratch memory
-		 * and only from memory below ISA_END_ADDRESS. Make sure that
-		 * when we add memory for the eligible range, we add it as
-		 * scratch memory so that we can resize the memblocks array.
+		 * At this point with KHO we only allocate from scratch memory.
+		 * At the same time, we configure memblock to only allow
+		 * allocations from memory below ISA_END_ADDRESS which is not
+		 * a natural scratch region, because Linux ignores memory below
+		 * ISA_END_ADDRESS at runtime.
+		 *
+		 * To make sure that we can actually perform allocations during
+		 * this phase, let's mark memory below ISA_END_ADDRESS as scratch
+		 * so we can allocate from there in a scratch-only world.
+		 * 
 		 */
 		if (is_kho_boot() && (end <= ISA_END_ADDRESS))
 			memblock_mark_scratch(entry->addr, end);
