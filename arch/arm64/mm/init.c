@@ -387,12 +387,6 @@ void __init mem_init(void)
 	memblock_free_all();
 
 	/*
-	 * Now that all KHO pages are marked as reserved, let's flip them back
-	 * to normal pages with accurate refcount.
-	 */
-	kho_populate_refcount();
-
-	/*
 	 * Check boundaries twice: Some fundamental inconsistencies can be
 	 * detected at build time already.
 	 */

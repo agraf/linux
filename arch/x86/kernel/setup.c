@@ -1018,23 +1018,6 @@ void __init setup_arch(char **cmdline_p)
 	e820__memblock_setup();
 
 	/*
-	 * We can resize memblocks at this point, let's dump all KHO
-	 * reservations in and switch from scratch-only to normal allocations
-	 */
-	kho_reserve_previous_mem();
-
-	/* Allocations now skip scratch mem, return low 1M to the pool */
-	if (is_kho_boot()) {
-		u64 i;
-		phys_addr_t base, end;
-
-		__for_each_mem_range(i, &memblock.memory, NULL, NUMA_NO_NODE,
-				     MEMBLOCK_SCRATCH, &base, &end, NULL)
-			if (end <= ISA_END_ADDRESS)
-				memblock_clear_scratch(base, end - base);
-	}
-
-	/*
 	 * Needs to run after memblock setup because it needs the physical
 	 * memory size.
 	 */

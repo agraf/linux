@@ -1351,12 +1351,6 @@ void __init mem_init(void)
 	x86_init.hyper.init_after_bootmem();
 
 	/*
-	 * Now that all KHO pages are marked as reserved, let's flip them back
-	 * to normal pages with accurate refcount.
-	 */
-	kho_populate_refcount();
-
-	/*
 	 * Must be done after boot memory is put on freelist, because here we
 	 * might set fields in deferred struct pages that have not yet been
 	 * initialized, and memblock_free_all() initializes all the reserved

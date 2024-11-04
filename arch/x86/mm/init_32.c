@@ -740,12 +740,6 @@ void __init mem_init(void)
 	x86_init.hyper.init_after_bootmem();
 
 	/*
-	 * Now that all KHO pages are marked as reserved, let's flip them back
-	 * to normal pages with accurate refcount.
-	 */
-	kho_populate_refcount();
-
-	/*
 	 * Check boundaries twice: Some fundamental inconsistencies can
 	 * be detected at build time already.
 	 */

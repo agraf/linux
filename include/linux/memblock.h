@@ -608,9 +608,11 @@ static inline void memtest_report_meminfo(struct seq_file *m) { }
 #ifdef CONFIG_MEMBLOCK_SCRATCH
 void memblock_set_scratch_only(void);
 void memblock_clear_scratch_only(void);
+bool memblock_is_scratch_only(void);
 #else
 static inline void memblock_set_scratch_only(void) { }
 static inline void memblock_clear_scratch_only(void) { }
+static inline bool memblock_is_scratch_only(void) { return false; }
 #endif
 
 #endif /* _LINUX_MEMBLOCK_H */

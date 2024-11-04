@@ -946,6 +946,11 @@ __init_memblock void memblock_clear_scratch_only(void)
 {
 	scratch_only = false;
 }
+
+__init_memblock bool memblock_is_scratch_only(void)
+{
+	return scratch_only;
+}
 #endif
 
 /**
@@ -2326,8 +2331,12 @@ void __init memblock_free_all(void)
 	free_unused_memmap();
 	reset_all_zones_managed_pages();
 
+	memblock_clear_scratch_only();
 	pages = free_low_memory_core_early();
 	totalram_pages_add(pages);
+
+pr_err("XXX %s:%d", __func__, __LINE__);
+	kho_init_reserved_pages();
 }
 
 /* Keep a table to reserve named memory */

@@ -13,11 +13,8 @@
 #include <linux/kmsg_dump.h>
 #include <linux/memblock.h>
 
-/* The kho dt during runtime */
-static void *fdt;
-
 /* Globals to hand over phys/len from early to runtime */
-static phys_addr_t handover_phys __initdata;
+phys_addr_t handover_phys;
 static u32 handover_len __initdata;
 
 static phys_addr_t mem_phys __initdata;
@@ -28,18 +25,20 @@ phys_addr_t kho_scratch_len;
 
 const void *kho_get_fdt(void)
 {
-	return fdt;
+	if (!handover_phys)
+		return NULL;
+
+	return __va(handover_phys);
 }
 EXPORT_SYMBOL_GPL(kho_get_fdt);
 
 /**
- * kho_populate_refcount - Scan the DT for any memory ranges. Increase the
- * affected pages' refcount by 1 for each.
+ * kho_init_reserved_pages - Scan the DT for any memory ranges. Increase the
+ * affected pages' refcount by 1 for each. Is called by memblock_free_all().
  */
-__init void kho_populate_refcount(void)
+__init void kho_init_reserved_pages(void)
 {
 	const void *fdt = kho_get_fdt();
-	void *mem_virt = __va(mem_phys);
 	int offset = 0, depth = 0, initial_depth = 0, len;
 
 	if (!fdt)
@@ -64,31 +63,6 @@ __init void kho_populate_refcount(void)
 
 			for (pfn = start_pfn; pfn < end_pfn; pfn++)
 				get_page(pfn_to_page(pfn));
-		}
-	}
-
-	/*
-	 * Then reduce the reference count by 1 to offset the initial ref count
-	 * of 1. In addition, unreserve the page. That way, we can free_page()
-	 * it for every consumer and automatically free it to the global memory
-	 * pool when everyone is done.
-	 */
-	for (offset = 0; offset < mem_len; offset += sizeof(struct kho_mem)) {
-		struct kho_mem *mem = mem_virt + offset;
-		u64 start_pfn = PFN_DOWN(mem->addr);
-		u64 end_pfn = PFN_UP(mem->addr + mem->len);
-		u64 pfn;
-
-		for (pfn = start_pfn; pfn < end_pfn; pfn++) {
-			struct page *page = pfn_to_page(pfn);
-
-			/*
-			 * This is similar to free_reserved_page(), but
-			 * preserves the reference count
-			 */
-			ClearPageReserved(page);
-			__free_page(page);
-			adjust_managed_page_count(page, 1);
 		}
 	}
 }
@@ -148,55 +122,6 @@ void *kho_claim_mem(const struct kho_mem *mem)
 }
 EXPORT_SYMBOL_GPL(kho_claim_mem);
 
-/**
- * kho_reserve_previous_mem - Adds all memory reservations into memblocks
- * and moves us out of the scratch only phase. Must be called after page tables
- * are initialized and memblock_allow_resize().
- */
-void __init kho_reserve_previous_mem(void)
-{
-	void *mem_virt = __va(mem_phys);
-	int off, err = 0;
-
-	if (!handover_phys || !mem_phys)
-		return;
-
-	/*
-	 * We reached here because we are running inside a working linear map
-	 * that allows us to resize memblocks dynamically. Use the chance and
-	 * populate the global fdt pointer
-	 */
-	fdt = __va(handover_phys);
-
-	off = fdt_path_offset(fdt, "/");
-	if (off < 0)
-		err = -EINVAL;
-
-	if (fdt)
-		err |= fdt_node_check_compatible(fdt, off, "kho-v1");
-
-	if (err) {
-		pr_warn("KHO invalid, disabling.");
-		fdt = NULL;
-	} else {
-		/* Populate all preserved memory areas as reserved */
-		for (off = 0; off < mem_len; off += sizeof(struct kho_mem)) {
-			struct kho_mem *mem = mem_virt + off;
-
-			memblock_reserve(mem->addr, mem->len);
-		}
-	}
-
-	/* Unreserve the mem cache - we don't need it from here on */
-	memblock_phys_free(mem_phys, mem_len);
-
-	/*
-	 * Now we know about all memory reservations, release the scratch only
-	 * constraint and allow normal allocations from the scratch region.
-	 */
-	memblock_clear_scratch_only();
-}
-
 /* Handling for /sys/firmware/kho */
 static struct kobject *kho_kobj;
 
@@ -212,6 +137,7 @@ static BIN_ATTR(dt, 0400, raw_read, NULL, 0);
 
 static __init int kho_in_init(void)
 {
+	const void *fdt = kho_get_fdt();
 	int ret = 0;
 
 	if (!fdt)
@@ -224,7 +150,7 @@ static __init int kho_in_init(void)
 	}
 
 	bin_attr_dt.size = fdt_totalsize(fdt);
-	bin_attr_dt.private = fdt;
+	bin_attr_dt.private = (void*)fdt;
 	ret = sysfs_create_bin_file(kho_kobj, &bin_attr_dt);
 	if (ret)
 		goto err;
